@@ -31,7 +31,7 @@ export default function TeamFlipCard({ team }: { team: Team }) {
 
                 {/* BACK */}
                 <div className="flip-card-back glass p-5 flex flex-col items-center justify-center gap-2"
-                    style={{ background: `linear-gradient(135deg, ${team.colors[0]}15, transparent)` }}
+                    style={{ background: `linear-gradient(135deg, ${ (team as any).color1 || (team.colors && team.colors[0]) || "#ccc" }15, transparent)` }}
                 >
                     {ranking && (
                         <>

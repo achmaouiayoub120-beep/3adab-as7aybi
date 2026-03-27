@@ -9,6 +9,7 @@ import api from "@/lib/api";
 export default function TeamsManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingTeam, setEditingTeam] = useState<any>(null);
     const queryClient = useQueryClient();
 
     const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ export default function TeamsManagement() {
         color1: "#00A651",
         color2: "#FFFFFF",
         stadiumId: "",
-        logo: ""
+        logoUrl: ""
     });
 
     const { data: teamsResponse, isLoading: isLoadingTeams } = useQuery({
@@ -46,9 +47,23 @@ export default function TeamsManagement() {
             queryClient.invalidateQueries({ queryKey: ["teams"] });
             toast.success("Équipe ajoutée !");
             setIsDialogOpen(false);
-            setFormData({ name: "", shortName: "", city: "", color1: "#00A651", color2: "#FFFFFF", stadiumId: "", logo: "" });
+            resetForm();
         },
         onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de la création")
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+            const res = await api.put(`/admin/teams/${id}`, payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["teams"] });
+            toast.success("Équipe mise à jour !");
+            setIsDialogOpen(false);
+            resetForm();
+        },
+        onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de la mise à jour")
     });
 
     const deleteMutation = useMutation({
@@ -62,6 +77,25 @@ export default function TeamsManagement() {
         onError: () => toast.error("Erreur, impossible de supprimer")
     });
 
+    const resetForm = () => {
+        setFormData({ name: "", shortName: "", city: "", color1: "#00A651", color2: "#FFFFFF", stadiumId: "", logoUrl: "" });
+        setEditingTeam(null);
+    };
+
+    const handleEdit = (team: any) => {
+        setEditingTeam(team);
+        setFormData({
+            name: team.name,
+            shortName: team.shortName,
+            city: team.city,
+            color1: team.color1,
+            color2: team.color2,
+            stadiumId: team.stadiumId?.toString() || "",
+            logoUrl: team.logoUrl || ""
+        });
+        setIsDialogOpen(true);
+    };
+
     if (isLoadingTeams) return <div className="flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
     const teams = teamsResponse?.data || [];
@@ -74,15 +108,21 @@ export default function TeamsManagement() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        createMutation.mutate({
+        const payload = {
             name: formData.name,
             shortName: formData.shortName.toUpperCase(),
             city: formData.city,
             color1: formData.color1,
             color2: formData.color2,
-            stadiumId: Number(formData.stadiumId),
-            logo: formData.logo || undefined
-        });
+            stadiumId: formData.stadiumId ? Number(formData.stadiumId) : null,
+            logoUrl: formData.logoUrl || null
+        };
+
+        if (editingTeam) {
+            updateMutation.mutate({ id: editingTeam.id, payload });
+        } else {
+            createMutation.mutate(payload);
+        }
     };
 
     return (
@@ -93,15 +133,15 @@ export default function TeamsManagement() {
                     <p className="text-muted-foreground font-heading">Gérez les {teams.length} clubs de la Botola Pro.</p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                     <DialogTrigger asChild>
-                        <button className="btn-neon flex items-center gap-2 text-sm">
+                        <button onClick={resetForm} className="btn-neon flex items-center gap-2 text-sm">
                             <Plus className="w-4 h-4" /> Ajouter une équipe
                         </button>
                     </DialogTrigger>
                     <DialogContent className="glass-strong border-border/50 text-foreground max-w-md">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-display">Ajouter une Équipe</DialogTitle>
+                            <DialogTitle className="text-2xl font-display">{editingTeam ? "Modifier l'Équipe" : "Ajouter une Équipe"}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                             <div>
@@ -149,8 +189,8 @@ export default function TeamsManagement() {
                             <div>
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">URL du Logo (Optionnel)</label>
                                 <input
-                                    type="url" value={formData.logo}
-                                    onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                                    type="url" value={formData.logoUrl}
+                                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
                                     className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
                                     placeholder="https://..."
                                 />
@@ -179,8 +219,8 @@ export default function TeamsManagement() {
                                 <button type="button" onClick={() => setIsDialogOpen(false)} className="flex-1 py-2 rounded-lg bg-muted text-foreground font-medium hover:bg-muted/80 transition-colors">
                                     Annuler
                                 </button>
-                                <button type="submit" disabled={createMutation.isPending} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-[0_0_15px_rgba(0,166,81,0.5)] disabled:opacity-50">
-                                    {createMutation.isPending ? "Création..." : "Ajouter l'équipe"}
+                                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-[0_0_15px_rgba(0,166,81,0.5)] disabled:opacity-50">
+                                    {createMutation.isPending || updateMutation.isPending ? "Traitement..." : editingTeam ? "Mettre à jour" : "Ajouter l'équipe"}
                                 </button>
                             </div>
                         </form>
@@ -231,7 +271,10 @@ export default function TeamsManagement() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <button className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors">
+                                            <button 
+                                              onClick={() => handleEdit(team)}
+                                              className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                                            >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button onClick={() => { if (confirm("Supprimer cette équipe ?")) deleteMutation.mutate(team.id) }} disabled={deleteMutation.isPending} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50">

@@ -122,14 +122,14 @@ export default function Reservation() {
   }
 
   const match = matchData;
-  const home = match.homeTeam;
-  const away = match.awayTeam;
-  const stadium = match.stadium;
+  const home = match?.homeTeam;
+  const away = match?.awayTeam;
+  const stadium = match?.stadium;
 
   const prices: Record<Zone, number> = {
-    VIP: match.priceVip,
-    TRIBUNE: match.priceTribune,
-    POPULAIRE: match.pricePopulaire,
+    VIP: match?.priceVip || 0,
+    TRIBUNE: match?.priceTribune || 0,
+    POPULAIRE: match?.pricePopulaire || 0,
   };
   const total = zone ? prices[zone] * quantity : 0;
 
@@ -162,21 +162,23 @@ export default function Reservation() {
 
   const handleDownloadPDF = () => {
       if (!completedReservations) return;
-      const t = completedReservations.tickets[0]; // Sample first ticket if multiple
-      const dateObj = new Date(match.date);
+      const t = completedReservations.tickets?.[0]; // Sample first ticket if multiple
+      if (!t) return;
+      
+      const dateObj = new Date(match?.date || "");
       generatePDF({
         ticketId: t.ticketCode,
-        homeName: home.name,
-        awayName: away.name,
-        homeShort: home.shortName,
-        awayShort: away.shortName,
-        stadiumName: stadium.name,
-        stadiumCity: stadium.city,
+        homeName: home?.name || "",
+        awayName: away?.name || "",
+        homeShort: home?.shortName || "",
+        awayShort: away?.shortName || "",
+        stadiumName: stadium?.name || "",
+        stadiumCity: stadium?.city || "",
         date: dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
         time: dateObj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
         zone: t.zone,
         quantity, // We can put total quantity or 1 since a ticket is for 1
-        totalPrice: total / quantity,
+        totalPrice: (total || 0) / quantity,
       });
   };
 
@@ -194,13 +196,13 @@ export default function Reservation() {
           <div className="flex items-center gap-3">
             <TeamLogo team={home} size={36} />
             <span className="font-heading font-bold text-foreground text-sm">
-              {home.shortName} vs {away.shortName}
+              {home?.shortName} vs {away?.shortName}
             </span>
             <TeamLogo team={away} size={36} />
           </div>
           <div className="text-xs text-muted-foreground flex items-center gap-3">
-            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{stadium.name}</span>
-            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(match.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{stadium?.name}</span>
+            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{match?.date ? new Date(match.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : ""}</span>
           </div>
         </div>
 
@@ -265,9 +267,9 @@ export default function Reservation() {
               {/* Order summary */}
               <div className="glass p-6 space-y-3">
                 <h3 className="font-heading font-bold text-foreground text-sm uppercase tracking-wider mb-3">Détails de la commande</h3>
-                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Match</span><span className="text-foreground font-medium">{home.name} vs {away.name}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Stade</span><span className="text-foreground">{stadium.name}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date</span><span className="text-foreground">{new Date(match.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Match</span><span className="text-foreground font-medium">{home?.name} vs {away?.name}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Stade</span><span className="text-foreground">{stadium?.name}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date</span><span className="text-foreground">{match?.date ? new Date(match.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Zone</span><span className="text-foreground font-bold">{zone}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Quantité</span><span className="text-foreground">{quantity}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Prix unitaire</span><span className="text-foreground font-mono">{zone ? prices[zone] : 0} MAD</span></div>
@@ -467,15 +469,15 @@ export default function Reservation() {
                       <span className="text-display text-2xl text-muted-foreground">VS</span>
                       <TeamLogo team={away} size={44} />
                     </div>
-                    <p className="font-heading font-semibold text-foreground text-sm mb-1">{home.name} vs {away.name}</p>
+                    <p className="font-heading font-semibold text-foreground text-sm mb-1">{home?.name} vs {away?.name}</p>
 
                     <div className="border-t border-border my-4" />
 
                     <div className="space-y-2 text-sm">
                       <p className="text-muted-foreground">
-                        📅 {new Date(match.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · {new Date(match.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        📅 {match?.date ? new Date(match.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""} · {match?.date ? new Date(match.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : ""}
                       </p>
-                      <p className="text-muted-foreground">🏟️ {stadium.name}, {stadium.city}</p>
+                      <p className="text-muted-foreground">🏟️ {stadium?.name}, {stadium?.city}</p>
                       <p className="text-foreground font-semibold">🎫 {t.zone} · {1} billet(s)</p>
                       <p className="text-muted-foreground">👤 {user?.firstName} {user?.lastName} · {user?.email}</p>
                     </div>

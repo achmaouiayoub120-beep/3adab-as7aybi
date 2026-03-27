@@ -1,9 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MapPin, Calendar, Clock, Users } from "lucide-react";
-import { getTeamById } from "@/data/teams";
-import { getStadiumById } from "@/data/stadiums";
-import type { Match } from "@/data/matches";
 import { useCountdown } from "@/hooks/useCountdown";
 import TeamLogo from "@/components/TeamLogo";
 
@@ -19,10 +16,10 @@ function CountdownDisplay({ date }: { date: string }) {
   );
 }
 
-export default function MatchCard({ match }: { match: Match }) {
-  const home = getTeamById(match.homeTeamId)!;
-  const away = getTeamById(match.awayTeamId)!;
-  const stadium = getStadiumById(match.stadiumId)!;
+export default function MatchCard({ match }: { match: any }) {
+  const home = match.homeTeam;
+  const away = match.awayTeam;
+  const stadium = match.stadium;
   const dateObj = new Date(match.date);
   const fillPercent = ((match.seatsTotal - match.seatsAvailable) / match.seatsTotal) * 100;
   const isAlmostFull = fillPercent > 90;
@@ -56,7 +53,7 @@ export default function MatchCard({ match }: { match: Match }) {
       <div className="px-5 py-6 flex items-center justify-between">
         <div className="flex flex-col items-center gap-2 flex-1">
           <TeamLogo team={home} size={48} />
-          <span className="text-xs font-heading font-semibold text-foreground text-center leading-tight">{home.name}</span>
+          <span className="text-xs font-heading font-semibold text-foreground text-center leading-tight">{home?.name}</span>
         </div>
         <div className="flex flex-col items-center gap-1 px-4">
           <span className="font-display text-2xl text-muted-foreground">VS</span>
@@ -64,7 +61,7 @@ export default function MatchCard({ match }: { match: Match }) {
         </div>
         <div className="flex flex-col items-center gap-2 flex-1">
           <TeamLogo team={away} size={48} />
-          <span className="text-xs font-heading font-semibold text-foreground text-center leading-tight">{away.name}</span>
+          <span className="text-xs font-heading font-semibold text-foreground text-center leading-tight">{away?.name}</span>
         </div>
       </div>
 
@@ -72,7 +69,7 @@ export default function MatchCard({ match }: { match: Match }) {
       <div className="px-5 pb-3 space-y-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <MapPin className="w-3 h-3" />
-          <span>{stadium.name}, {stadium.city}</span>
+          <span>{stadium?.name}, {stadium?.city}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Users className="w-3 h-3" />

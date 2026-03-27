@@ -9,15 +9,16 @@ import api from "@/lib/api";
 export default function StadiumsManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingStadium, setEditingStadium] = useState<any>(null);
     const queryClient = useQueryClient();
 
     const [formData, setFormData] = useState({
         name: "",
         city: "",
         capacity: "",
-        image: "",
+        imageUrl: "",
         description: "",
-        location: ""
+        locationUrl: ""
     });
 
     const { data: stadiumsResponse, isLoading } = useQuery({
@@ -37,9 +38,23 @@ export default function StadiumsManagement() {
             queryClient.invalidateQueries({ queryKey: ["stadiums"] });
             toast.success("Stade ajouté !");
             setIsDialogOpen(false);
-            setFormData({ name: "", city: "", capacity: "", image: "", description: "", location: "" });
+            resetForm();
         },
         onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de la création")
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+            const res = await api.put(`/admin/stadiums/${id}`, payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["stadiums"] });
+            toast.success("Stade mis à jour !");
+            setIsDialogOpen(false);
+            resetForm();
+        },
+        onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de la mise à jour")
     });
 
     const deleteMutation = useMutation({
@@ -53,6 +68,24 @@ export default function StadiumsManagement() {
         onError: () => toast.error("Erreur, impossible de supprimer")
     });
 
+    const resetForm = () => {
+        setFormData({ name: "", city: "", capacity: "", imageUrl: "", description: "", locationUrl: "" });
+        setEditingStadium(null);
+    };
+
+    const handleEdit = (stadium: any) => {
+        setEditingStadium(stadium);
+        setFormData({
+            name: stadium.name,
+            city: stadium.city,
+            capacity: stadium.capacity.toString(),
+            imageUrl: stadium.imageUrl || "",
+            description: stadium.description || "",
+            locationUrl: stadium.locationUrl || ""
+        });
+        setIsDialogOpen(true);
+    };
+
     if (isLoading) return <div className="flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
     const stadiums = stadiumsResponse?.data || [];
@@ -63,14 +96,20 @@ export default function StadiumsManagement() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        createMutation.mutate({
+        const payload = {
             name: formData.name,
             city: formData.city,
             capacity: Number(formData.capacity),
-            imageUrl: formData.image,
-            description: formData.description,
-            gpsCoordinates: formData.location
-        });
+            imageUrl: formData.imageUrl || null,
+            description: formData.description || null,
+            locationUrl: formData.locationUrl || null
+        };
+
+        if (editingStadium) {
+            updateMutation.mutate({ id: editingStadium.id, payload });
+        } else {
+            createMutation.mutate(payload);
+        }
     };
 
     return (
@@ -81,15 +120,15 @@ export default function StadiumsManagement() {
                     <p className="text-muted-foreground font-heading">Gérez les {stadiums.length} infrastructures sportives.</p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                     <DialogTrigger asChild>
-                        <button className="btn-neon flex items-center gap-2 text-sm">
+                        <button onClick={resetForm} className="btn-neon flex items-center gap-2 text-sm">
                             <Plus className="w-4 h-4" /> Ajouter un stade
                         </button>
                     </DialogTrigger>
                     <DialogContent className="glass-strong border-border/50 text-foreground max-w-md max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-display">Ajouter un Stade</DialogTitle>
+                            <DialogTitle className="text-2xl font-display">{editingStadium ? "Modifier le Stade" : "Ajouter un Stade"}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                             <div>
@@ -135,8 +174,8 @@ export default function StadiumsManagement() {
                             <div>
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">URL de l'image *</label>
                                 <input
-                                    type="url" required value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                    type="url" required value={formData.imageUrl}
+                                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                                     className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
                                     placeholder="https://..."
                                 />
@@ -145,8 +184,8 @@ export default function StadiumsManagement() {
                             <div>
                                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Embed Google Maps (src URL) *</label>
                                 <input
-                                    type="url" required value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    type="url" required value={formData.locationUrl}
+                                    onChange={(e) => setFormData({ ...formData, locationUrl: e.target.value })}
                                     className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
                                     placeholder="https://www.google.com/maps/embed?..."
                                 />
@@ -156,8 +195,8 @@ export default function StadiumsManagement() {
                                 <button type="button" onClick={() => setIsDialogOpen(false)} className="flex-1 py-2 rounded-lg bg-muted text-foreground font-medium hover:bg-muted/80 transition-colors">
                                     Annuler
                                 </button>
-                                <button type="submit" disabled={createMutation.isPending} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-[0_0_15px_rgba(0,166,81,0.5)] disabled:opacity-50">
-                                    {createMutation.isPending ? "Création..." : "Ajouter le stade"}
+                                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-[0_0_15px_rgba(0,166,81,0.5)] disabled:opacity-50">
+                                    {createMutation.isPending || updateMutation.isPending ? "Traitement..." : editingStadium ? "Mettre à jour" : "Ajouter le stade"}
                                 </button>
                             </div>
                         </form>
@@ -195,7 +234,10 @@ export default function StadiumsManagement() {
                                 <TableCell className="font-mono text-sm">{stadium.capacity.toLocaleString()} places</TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        <button className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors">
+                                        <button 
+                                          onClick={() => handleEdit(stadium)}
+                                          className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                                        >
                                             <Edit className="w-4 h-4" />
                                         </button>
                                         <button onClick={() => { if (confirm("Supprimer ce stade ?")) deleteMutation.mutate(stadium.id) }} disabled={deleteMutation.isPending} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50">

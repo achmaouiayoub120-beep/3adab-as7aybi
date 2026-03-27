@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronDown, Trophy, Calendar, Ticket, MapPin, Users, Zap, Star, Shield } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
 import MatchCard from "@/components/match/MatchCard";
 import LeagueTable from "@/components/ranking/LeagueTable";
 import TeamFlipCard from "@/components/team/TeamFlipCard";
 import StadiumCard from "@/components/stadium/StadiumCard";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
-import { MATCHES } from "@/data/matches";
-import { TEAMS } from "@/data/teams";
-import { STADIUMS } from "@/data/stadiums";
+import { Loader2 } from "lucide-react";
 import { staggerContainer, staggerItem } from "@/design-system/animations";
 
 const stagger = {
@@ -28,7 +28,43 @@ const STATS = [
 ];
 
 export default function Home() {
-  const upcomingMatches = MATCHES.slice(0, 4);
+  const { data: matches } = useQuery({
+    queryKey: ["matches"],
+    queryFn: async () => {
+      const res = await api.get("/matches");
+      return res.data.data;
+    },
+  });
+
+  const { data: teams } = useQuery({
+    queryKey: ["teams"],
+    queryFn: async () => {
+      const res = await api.get("/teams");
+      return res.data.data;
+    },
+  });
+
+  const { data: stadiums } = useQuery({
+    queryKey: ["stadiums"],
+    queryFn: async () => {
+      const res = await api.get("/stadiums");
+      return res.data.data;
+    },
+  });
+
+  const upcomingMatches = matches?.slice(0, 4) || [];
+  const displayTeams = teams?.slice(0, 8) || [];
+  const displayStadiums = stadiums?.slice(0, 6) || [];
+
+  const isLoading = !matches || !teams || !stadiums;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -247,7 +283,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-5xl mx-auto"
         >
-          {TEAMS.map((team) => (
+          {displayTeams.map((team: any) => (
             <motion.div key={team.id} variants={staggerItem}>
               <TeamFlipCard team={team} />
             </motion.div>
@@ -280,7 +316,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto"
         >
-          {STADIUMS.slice(0, 6).map((stadium) => (
+          {displayStadiums.map((stadium: any) => (
             <motion.div key={stadium.id} variants={staggerItem}>
               <StadiumCard stadium={stadium} />
             </motion.div>

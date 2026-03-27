@@ -1,73 +1,30 @@
-# Welcome to your Lovable project
+# 🎫 BotolaTickets - Plateforme de Billetterie Full-Stack
 
-## Project info
+Bienvenue sur le projet **BotolaTickets**, une application web full-stack premium pour la gestion et la réservation de tickets pour la Botola Pro.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Lancement Rapide (Windows)
+Pour lancer le projet pour la première fois ou pour une démonstration :
+1. Assurez-vous d'avoir **Node.js** installé (v18+).
+2. Double-cliquez sur le fichier **`Lancer-Botola.bat`** à la racine.
+3. Le script va :
+   - Installer les dépendances.
+   - Configurer la base de données SQLite (Prisma).
+   - Injecter les données de test (équipes, stades, matchs).
+   - Lancer l'API (Port 4000) et le Site (Port 8090).
 
-## How can I edit this code?
+## 🔐 Comptes de Test (Mot de passe : Admin2026! / User2026!)
+| Rôle | Email | Mot de passe |
+| :--- | :--- | :--- |
+| **Administrateur** | `admin@botola.ma` | `Admin2026!` |
+| **Utilisateur (Client)** | `user@botola.ma` | `User2026!` |
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🛠️ Architecture Technologique
+- **Frontend** : React, Vite, Tailwind CSS, Framer Motion, TanStack Query.
+- **Backend** : Node.js (Express), JWT (Auth), Prisma (ORM).
+- **Database** : SQLite.
+- **Fonctionnalités** : QR Code, PDF Tickets, Mode Sombre, Dashboard Admin.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+*Projet réalisé pour la soutenance PFE - BotolaTickets 2026*

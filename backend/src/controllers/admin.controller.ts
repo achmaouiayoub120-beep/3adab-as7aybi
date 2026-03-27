@@ -20,7 +20,7 @@ export const adminController = {
   },
   async toggleUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await adminService.toggleUserActive(req.params.id);
+      const user = await adminService.setUserStatus(req.params.id as string, req.body.status);
       sendSuccess(res, user);
     } catch (e) { next(e); }
   },
@@ -101,6 +101,12 @@ export const adminController = {
     } catch (e) { next(e); }
   },
 
+  async getTickets(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const tickets = await adminService.getAllTickets();
+      sendSuccess(res, tickets);
+    } catch (e) { next(e); }
+  },
   // Analytics
   async getAnalytics(_req: Request, res: Response, next: NextFunction) {
     try {

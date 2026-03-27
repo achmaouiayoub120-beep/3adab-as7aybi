@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Ticket, Clock, User, LogOut, QrCode, Download, Calendar, MapPin, ChevronRight, Loader2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
 import TeamLogo from "@/components/TeamLogo";
@@ -118,6 +118,7 @@ export default function UserDashboard() {
     const { user, logout, updateProfile } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>("overview");
     const [isUpdating, setIsUpdating] = useState(false);
+    const queryClient = useQueryClient();
 
     // Profile form state
     const [firstName, setFirstName] = useState(user?.firstName || "");
@@ -132,12 +133,29 @@ export default function UserDashboard() {
         },
     });
 
-    const reservations = reservationsResponse?.data || [];
-    const allTickets = reservations.flatMap((r: any) => r.tickets.map((t: any) => ({ ...t, reservation: r })));
-    const upcomingTickets = allTickets.filter((t: any) => t.reservation.match.status === "SCHEDULED");
-    const pastTickets = allTickets.filter((t: any) => t.reservation.match.status !== "SCHEDULED");
+    const cancelMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await api.patch(`/reservations/${id}/cancel`);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["myReservations"] });
+            toast.success("Réservation annulée avec succès.");
+        },
+        onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de l'annulation")
+    });
 
-    const totalSpent = reservations.filter((r: any) => r.status === "CONFIRMED").reduce((acc: number, r: any) => acc + r.totalPrice, 0);
+    const reservations = reservationsResponse?.data || [];
+    const allTickets = reservations
+        .filter((r: any) => r.status === "CONFIRMED")
+        .flatMap((r: any) => r.tickets.map((t: any) => ({ ...t, reservation: r })));
+    
+    const upcomingTickets = allTickets.filter((t: any) => new Date(t.reservation.match.date) > new Date());
+    const pastTickets = allTickets.filter((t: any) => new Date(t.reservation.match.date) <= new Date());
+
+    const totalSpent = reservations
+        .filter((r: any) => r.status === "CONFIRMED")
+        .reduce((acc: number, r: any) => acc + r.totalPrice, 0);
 
     const KPIS = [
         { label: "Billets Actifs", value: upcomingTickets.length, icon: Ticket, color: "text-primary" },
@@ -276,12 +294,14 @@ export default function UserDashboard() {
                                                     <th className="text-center py-3 px-2">Qte</th>
                                                     <th className="text-center py-3 px-2">Prix</th>
                                                     <th className="text-center py-3 px-2">Statut</th>
+                                                    <th className="text-right py-3 px-4">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {reservations.map((r: any) => {
                                                     const h = r.match.homeTeam;
                                                     const a = r.match.awayTeam;
+                                                    const canCancel = r.status === "CONFIRMED" && new Date(r.match.date) > new Date();
                                                     return (
                                                         <tr key={r.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
                                                             <td className="py-3 px-4 font-mono text-xs text-primary">{r.id.split('-').pop() || r.id}</td>
@@ -290,16 +310,27 @@ export default function UserDashboard() {
                                                             <td className="text-center py-3 px-2 text-xs">{r.quantity}</td>
                                                             <td className="text-center py-3 px-2 font-mono text-xs">{r.totalPrice} MAD</td>
                                                             <td className="text-center py-3 px-2">
-                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${r.status === "CONFIRMED" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
-                                                                    {r.status}
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${r.status === "CONFIRMED" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                                                                    {r.status === "CONFIRMED" ? "Confirmé" : "Annulé"}
                                                                 </span>
+                                                            </td>
+                                                            <td className="text-right py-3 px-4">
+                                                                {canCancel && (
+                                                                    <button 
+                                                                        onClick={() => { if(confirm("Annuler cette réservation ?")) cancelMutation.mutate(r.id); }}
+                                                                        disabled={cancelMutation.isPending}
+                                                                        className="text-[10px] font-bold text-destructive hover:underline disabled:opacity-50"
+                                                                    >
+                                                                        {cancelMutation.isPending ? "..." : "Annuler"}
+                                                                    </button>
+                                                                )}
                                                             </td>
                                                         </tr>
                                                     );
                                                 })}
                                                 {reservations.length === 0 && (
                                                     <tr>
-                                                        <td colSpan={6} className="py-8 text-center text-muted-foreground">Aucune réservation trouvée.</td>
+                                                        <td colSpan={7} className="py-8 text-center text-muted-foreground">Aucune réservation trouvée.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

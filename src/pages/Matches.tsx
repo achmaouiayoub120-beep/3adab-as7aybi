@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Search, Filter, SlidersHorizontal } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
 import MatchCard from "@/components/match/MatchCard";
-import { MATCHES } from "@/data/matches";
-import { TEAMS } from "@/data/teams";
-import { STADIUMS } from "@/data/stadiums";
+import { Loader2 } from "lucide-react";
 import { staggerContainer, staggerItem } from "@/design-system/animations";
 
 export default function Matches() {
@@ -14,11 +14,21 @@ export default function Matches() {
   const [maxPrice, setMaxPrice] = useState(500);
   const [showFilters, setShowFilters] = useState(false);
 
+  const { data: matchesData, isLoading } = useQuery({
+    queryKey: ["matches"],
+    queryFn: async () => {
+      const res = await api.get("/matches");
+      return res.data.data;
+    },
+  });
+
+  const matches: any[] = matchesData || [];
+
   const filteredMatches = useMemo(() => {
-    return MATCHES.filter((match) => {
-      const home = TEAMS.find((t) => t.id === match.homeTeamId);
-      const away = TEAMS.find((t) => t.id === match.awayTeamId);
-      const stadium = STADIUMS.find((s) => s.id === match.stadiumId);
+    return matches.filter((match) => {
+      const home = match.homeTeam;
+      const away = match.awayTeam;
+      const stadium = match.stadium;
 
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -36,10 +46,10 @@ export default function Matches() {
 
       return true;
     });
-  }, [searchQuery, selectedTeam, selectedStadium, maxPrice]);
+  }, [matches, searchQuery, selectedTeam, selectedStadium, maxPrice]);
 
   // Group matches by date
-  const grouped = filteredMatches.reduce<Record<string, typeof MATCHES>>((acc, match) => {
+  const grouped = filteredMatches.reduce<Record<string, any[]>>((acc, match) => {
     const dateKey = new Date(match.date).toLocaleDateString("fr-FR", {
       weekday: "long",
       day: "numeric",
@@ -51,6 +61,24 @@ export default function Matches() {
     return acc;
   }, {});
 
+  // Extract unique teams and stadiums from all matches for filters
+  const teams = useMemo(() => {
+    const map = new Map();
+    matches.forEach(m => {
+        if (m.homeTeam) map.set(m.homeTeam.id, m.homeTeam);
+        if (m.awayTeam) map.set(m.awayTeam.id, m.awayTeam);
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [matches]);
+
+  const stadiums = useMemo(() => {
+    const map = new Map();
+    matches.forEach(m => {
+        if (m.stadium) map.set(m.stadium.id, m.stadium);
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [matches]);
+
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedTeam(null);
@@ -59,6 +87,14 @@ export default function Matches() {
   };
 
   const hasActiveFilters = searchQuery || selectedTeam || selectedStadium || maxPrice < 500;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -125,7 +161,7 @@ export default function Matches() {
                   className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Toutes les équipes</option>
-                  {TEAMS.map((team) => (
+                  {teams.map((team: any) => (
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
@@ -142,7 +178,7 @@ export default function Matches() {
                   className="w-full bg-muted rounded-lg px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Tous les stades</option>
-                  {STADIUMS.map((stadium) => (
+                  {stadiums.map((stadium: any) => (
                     <option key={stadium.id} value={stadium.id}>{stadium.name}</option>
                   ))}
                 </select>

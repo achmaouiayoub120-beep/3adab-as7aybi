@@ -10,12 +10,10 @@ interface TeamLogoProps {
 export default function TeamLogo({ team, size = 40, className = "" }: TeamLogoProps) {
   const [imgError, setImgError] = useState(false);
 
+  const imgSrc = (team as any).logoUrl || team.logo;
+
   // If there's a logo and we haven't encountered an error, try rendering it
-  if (team.logo && !imgError && (team as any).logoUrl !== null) {
-    // Note: team object might use 'logo' (frontend) or 'logoUrl' (backend API). 
-    // We try to support both.
-    const imgSrc = (team as any).logoUrl || team.logo;
-    
+  if (imgSrc && !imgError) {
     if (imgSrc) {
       return (
         <img
@@ -29,17 +27,20 @@ export default function TeamLogo({ team, size = 40, className = "" }: TeamLogoPr
     }
   }
 
+  const bgColor = (team as any).color1 || (team.colors && team.colors[0]) || "#ccc";
+  const textColor = (team as any).color2 || (team.colors && team.colors[1]) || "#fff";
+
   return (
     <div
       className={`rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${className}`}
       style={{
         width: size,
         height: size,
-        background: team.colors[0],
-        color: team.colors[1],
+        background: bgColor,
+        color: textColor,
       }}
     >
-      {team.shortName.slice(0, 3)}
+      {team.shortName?.slice(0, 3)}
     </div>
   );
 }

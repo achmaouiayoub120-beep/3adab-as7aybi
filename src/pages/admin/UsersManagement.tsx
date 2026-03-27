@@ -21,8 +21,8 @@ export default function UsersManagement() {
         },
     });
 
-    const statusMutation = useMutation({
-        mutationFn: async ({ id, status }: { id: number, status: string }) => {
+    const toggleStatusMutation = useMutation({
+        mutationFn: async ({ id, status }: { id: string; status: string }) => {
             const res = await api.patch(`/admin/users/${id}/status`, { status });
             return res.data;
         },
@@ -91,9 +91,9 @@ export default function UsersManagement() {
                                 <TableCell>
                                     <span className={cn(
                                         "w-fit px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                        user.status === "ACTIVE" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+                                        user.isActive ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
                                     )}>
-                                        {user.status}
+                                        {user.isActive ? "ACTIF" : "BLOQUÉ"}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">
@@ -104,9 +104,9 @@ export default function UsersManagement() {
                                         <button title="Historique" className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
                                             <History className="w-4 h-4" />
                                         </button>
-                                        {user.status === "ACTIVE" ? (
+                                        {user.isActive ? (
                                             <button 
-                                              onClick={() => statusMutation.mutate({ id: user.id, status: "BLOCKED" })}
+                                              onClick={() => toggleStatusMutation.mutate({ id: user.id, status: "BLOCKED" })}
                                               title="Bloquer" 
                                               className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
                                             >
@@ -114,7 +114,7 @@ export default function UsersManagement() {
                                             </button>
                                         ) : (
                                             <button 
-                                              onClick={() => statusMutation.mutate({ id: user.id, status: "ACTIVE" })}
+                                              onClick={() => toggleStatusMutation.mutate({ id: user.id, status: "ACTIVE" })}
                                               title="Débloquer" className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
                                             >
                                                 <UserCheck className="w-4 h-4" />

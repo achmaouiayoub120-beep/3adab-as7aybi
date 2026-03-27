@@ -12,10 +12,11 @@ router.get('/analytics', adminController.getAnalytics);
 
 // Users
 router.get('/users', adminController.getUsers);
-router.patch('/users/:id/toggle', adminController.toggleUser);
+router.patch('/users/:id/status', adminController.toggleUser);
 
-// Reservations
+// Reservations & Tickets
 router.get('/reservations', adminController.getAllReservations);
+router.get('/tickets', adminController.getTickets);
 
 // Ticket validation
 router.post('/tickets/validate/:code', adminController.validateTicket);

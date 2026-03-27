@@ -12,6 +12,7 @@ function cn(...inputs: any[]) {
 
 export default function MatchesManagement() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingMatch, setEditingMatch] = useState<any>(null);
     const queryClient = useQueryClient();
 
     const [formData, setFormData] = useState({
@@ -58,12 +59,23 @@ export default function MatchesManagement() {
             queryClient.invalidateQueries({ queryKey: ["matches"] });
             toast.success("Match créé avec succès !");
             setIsDialogOpen(false);
-            setFormData({
-                homeTeamId: "", awayTeamId: "", stadiumId: "", date: "",
-                priceVip: "", priceTribune: "", pricePopulaire: "", status: "SCHEDULED"
-            });
+            resetForm();
         },
         onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de la création")
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, payload }: { id: number, payload: any }) => {
+            const res = await api.put(`/admin/matches/${id}`, payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["matches"] });
+            toast.success("Match mis à jour !");
+            setIsDialogOpen(false);
+            resetForm();
+        },
+        onError: (err: any) => toast.error(err.response?.data?.message || "Erreur lors de la mise à jour")
     });
 
     const deleteMutation = useMutation({
@@ -77,6 +89,33 @@ export default function MatchesManagement() {
         onError: () => toast.error("Erreur lors de la suppression")
     });
 
+    const resetForm = () => {
+        setFormData({
+            homeTeamId: "", awayTeamId: "", stadiumId: "", date: "",
+            priceVip: "", priceTribune: "", pricePopulaire: "", status: "SCHEDULED"
+        });
+        setEditingMatch(null);
+    };
+
+    const handleEdit = (match: any) => {
+        setEditingMatch(match);
+        // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+        const d = new Date(match.date);
+        const localizedDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        
+        setFormData({
+            homeTeamId: match.homeTeamId.toString(),
+            awayTeamId: match.awayTeamId.toString(),
+            stadiumId: match.stadiumId.toString(),
+            date: localizedDate,
+            priceVip: match.priceVip.toString(),
+            priceTribune: match.priceTribune.toString(),
+            pricePopulaire: match.pricePopulaire.toString(),
+            status: match.status
+        });
+        setIsDialogOpen(true);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.homeTeamId === formData.awayTeamId) {
@@ -85,20 +124,24 @@ export default function MatchesManagement() {
         }
 
         const stadium = stadiums.find((s: any) => s.id === Number(formData.stadiumId));
-
-        createMutation.mutate({
+        const payload = {
             homeTeamId: Number(formData.homeTeamId),
             awayTeamId: Number(formData.awayTeamId),
             stadiumId: Number(formData.stadiumId),
             date: new Date(formData.date).toISOString(),
-            matchday: 1, // simplified
+            matchday: 1, 
             priceVip: Number(formData.priceVip),
             priceTribune: Number(formData.priceTribune),
             pricePopulaire: Number(formData.pricePopulaire),
-            seatsAvailable: stadium?.capacity || 0,
             seatsTotal: stadium?.capacity || 0,
             status: formData.status
-        });
+        };
+
+        if (editingMatch) {
+            updateMutation.mutate({ id: editingMatch.id, payload });
+        } else {
+            createMutation.mutate({ ...payload, seatsAvailable: stadium?.capacity || 0 });
+        }
     };
 
     if (isLoadingMatches) return <div className="flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
