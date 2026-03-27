@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         String        @default("USER")
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+  auditLogs    AuditLog[]
+
+  @@index([email])
+}
+
+model Team {
+  id          Int     @id @default(autoincrement())
+  name        String
+  shortName   String  @unique
+  city        String
+  color1      String
+  color2      String
+  logoUrl     String?
+  stadiumId   Int?
+  stadium     Stadium? @relation(fields: [stadiumId], references: [id])
+  homeMatches Match[]  @relation("homeTeam")
+  awayMatches Match[]  @relation("awayTeam")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shortName])
+}
+
+model Stadium {
+  id          Int      @id @default(autoincrement())
+  name        String
+  city        String
+  capacity    Int
+  imageUrl    String?
+  description String?
+  locationUrl String?
+  teams       Team[]
+  matches     Match[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Match {
+  id              Int          @id @default(autoincrement())
+  homeTeamId      Int
+  awayTeamId      Int
+  stadiumId       Int
+  date            DateTime
+  matchday        Int
+  priceVip        Float
+  priceTribune    Float
+  pricePopulaire  Float
+  seatsTotal      Int
+  seatsVip        Int          @default(0)
+  seatsTribune    Int          @default(0)
+  seatsPopulaire  Int          @default(0)
+  seatsAvailable  Int
+  status          String       @default("SCHEDULED")
+  scoreHome       Int?
+  scoreAway       Int?
+  homeTeam        Team         @relation("homeTeam", fields: [homeTeamId], references: [id])
+  awayTeam        Team         @relation("awayTeam", fields: [awayTeamId], references: [id])
+  stadium         Stadium      @relation(fields: [stadiumId], references: [id])
+  reservations    Reservation[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+model Reservation {
+  id            String    @id @default(cuid())
+  userId        String
+  matchId       Int
+  zone          String
+  quantity      Int
+  totalPrice    Float
+  status        String    @default("PENDING")
+  paymentMethod String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id])
+  match         Match     @relation(fields: [matchId], references: [id])
+  tickets       Ticket[]
+
+  @@index([userId])
+  @@index([matchId])
+  @@index([status])
+}
+
+model Ticket {
+  id            String      @id @default(cuid())
+  ticketCode    String      @unique
+  reservationId String
+  zone          String
+  seatNumber    String?
+  qrData        String      @unique
+  isUsed        Boolean     @default(false)
+  usedAt        DateTime?
+  createdAt     DateTime    @default(now())
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  @@index([ticketCode])
+  @@index([isUsed])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ip        String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([entity])
+}

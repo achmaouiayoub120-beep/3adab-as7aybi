@@ -1,0 +1,59 @@
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "homeTeamId": 1,
+    "awayTeamId": 2,
+    "stadiumId": 1,
+    "date": "2026-04-05T18:00:00.000Z",
+    "matchday": 26,
+    "priceVip": 400,
+    "priceTribune": 200,
+    "pricePopulaire": 80,
+    "seatsTotal": 67000,
+    "seatsVip": 10050,
+    "seatsTribune": 30150,
+    "seatsPopulaire": 26800,
+    "seatsAvailable": 67000,
+    "status": "SCHEDULED",
+    "scoreHome": null,
+    "scoreAway": null,
+    "createdAt": "2026-03-27T00:57:02.625Z",
+    "updatedAt": "2026-03-27T00:57:02.625Z",
+    "homeTeam": {
+      "id": 1,
+      "name": "Raja Club Athletic",
+      "shortName": "RCA",
+      "city": "Casablanca",
+      "color1": "#00A651",
+      "color2": "#FFFFFF",
+      "logoUrl": "/teams/raja.png",
+      "stadiumId": 1,
+      "createdAt": "2026-03-27T00:57:02.448Z",
+      "updatedAt": "2026-03-27T00:57:02.448Z"
+    },
+    "awayTeam": {
+      "id": 2,
+      "name": "Wydad Athletic Club",
+      "shortName": "WAC",
+      "city": "Casablanca",
+      "color1": "#E31E24",
+      "color2": "#FFFFFF",
+      "logoUrl": "/teams/wydad.png",
+      "stadiumId": 1,
+      "createdAt": "2026-03-27T00:57:02.448Z",
+      "updatedAt": "2026-03-27T00:57:02.448Z"
+    },
+    "stadium": {
+      "id": 1,
+      "name": "Complexe Sportif Mohammed V",
+      "city": "Casablanca",
+      "capacity": 67000,
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Stade_Mohammed_V_1.jpg/280px-Stade_Mohammed_V_1.jpg",
+      "description": "Le plus grand stade de Casablanca, domicile du Raja et du Wydad.",
+      "locationUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3323.8!2d-7.6328!3d33.5731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDM0JzIzLjIiTiA3wrAzNycyOC4wIlc!5e0!3m2!1sfr!2sma!4v1",
+      "createdAt": "2026-03-27T00:57:02.369Z",
+      "updatedAt": "2026-03-27T00:57:02.369Z"
+    }
+  }
+}
